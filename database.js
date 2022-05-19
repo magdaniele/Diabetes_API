@@ -2,15 +2,17 @@ const mongoose = require('mongoose');
 const {
   MONGO_USERNAME,
   MONGO_PASSWORD,
-  MONGO_HOSTNAME,
-  MONGO_PORT,
-  MONGO_DB
+  MONGO_HOSTNAME
 } = process.env;
 
-let url = `mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOSTNAME}:${MONGO_PORT}/${MONGO_DB}?authSource=admin`;
+const url = `mongodb+srv://${MONGO_USERNAME}:${MONGO_PASSWORD}@${MONGO_HOSTNAME}?retryWrites=true&w=majority`;
 
-mongoose.connect(url).then(() => {
-  console.log('MongoDB is connected');
-}).catch(err => {
-  console.log(err);
-});
+const connect = () => {
+  mongoose.connect(url).then(() => {
+    console.log('MongoDB is connected');
+  }).catch(err => {
+    console.log(err);
+  });
+}
+
+module.exports = { url, connect }

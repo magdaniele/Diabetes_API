@@ -1,50 +1,63 @@
-const mongoose = require('mongoose');
+const { model } = require('mongoose');
+const {Passport} = require('passport');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const passportLocalMongoose = require('passport-local-mongoose');
-const { GlucoseTest } = require('./glucose')
+const { User } = require('../models/users');
 
-const User = new mongoose.Schema({
-  password: String,
-  username: String,
-  name: String,
-  email: String,
-  glucoseTests: [GlucoseTest]
+User.plugin(passportLocalMongoose, {
+  usernameField: 'email'
 });
 
-User.plugin(passportLocalMongoose);
-
-const UserModel = mongoose.model('Users', User);
-
-passport.use(new LocalStrategy(UserModel.authenticate()));
+const UserModel = model('Users', User);
+passport.use(new LocalStrategy({
+  usernameField: 'email'
+}, UserModel.authenticate()));
 passport.serializeUser(UserModel.serializeUser());
 passport.deserializeUser(UserModel.deserializeUser());
 
 const createUser = async(req, res)=>{
-    const {username, name, email, password} = req.body;
+    const {name, email, height, weight, password} = req.body;
     UserModel.register({
-      username,
       name,
       email,
-      glucoseTests: [],
-    }, password, (err) => {
-      if (err) 
+      height,
+      weight
+    }, password)
+      .then(() => {
+        passport.authenticate('local', {
+          failureMessage: true
+        })(req, res, () => {
+          res.status(200).send(req.user);
+        })
+      })
+      .catch(err => {
         res.status(400).send(err);
-  
-      passport.authenticate('local', {
-        failureMessage: true
-      })(req, res, () => {
-        res.status(200).send('Registered');
       });
-    })
 }
 
-const loginUser = async(req, res)=>{
+const loginUser = async(req, res) => {
     passport.authenticate('local', {
       failureMessage: true
     })(req, res, () => {
-      res.status(200).send('Logged in');
+      res.status(200).send(req.user);
     });
+}
+
+const updateUser = async(req, res) => {
+  if (req.user) {
+    for (let key in req.body)
+      if (key in req.user && key !== "glucoseTests")
+        req.user[key] = req.body[key];
+    req.user.save()
+      .then((doc)=> {
+        res.status(200).send(doc);
+      })
+      .catch((err)=> {
+        res.status(400).send(err);
+      });
+  } else
+    res.status(401).send('Unauthorized');
 }
 
 const logoutUser = async(req, res)=>{
@@ -54,6 +67,7 @@ const logoutUser = async(req, res)=>{
 
 module.exports = {
     createUser,
-    logoutUser,
-    loginUser
+    loginUser,
+    updateUser,
+    logoutUser
 }
