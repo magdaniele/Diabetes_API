@@ -1,15 +1,16 @@
 const { model } = require('mongoose');
-const {Passport} = require('passport');
 const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const passportLocalMongoose = require('passport-local-mongoose');
-const { User } = require('../models/users');
+
+const User = require('../models/users');
 
 User.plugin(passportLocalMongoose, {
   usernameField: 'email'
 });
 
 const UserModel = model('Users', User);
+
 passport.use(new LocalStrategy({
   usernameField: 'email'
 }, UserModel.authenticate()));

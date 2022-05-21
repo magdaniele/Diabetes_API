@@ -9,11 +9,13 @@ dotenv.config();
 const database = require('./database');
 const usersRouter = require('./src/routes/users.js');
 const glucoseRouter = require('./src/routes/glucose.js');
+const mealsRouter = require('./src/routes/meals.js');
 
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded({extended:false}));
+
 app.use(session({
   resave: false,
   saveUninitialized: false,
@@ -22,10 +24,13 @@ app.use(session({
     mongoUrl: database.url
   })
 }));
+
 app.use(passport.initialize());
 app.use(passport.session());
+
 app.use('/users',usersRouter); 
 app.use('/glucose',glucoseRouter); 
+app.use('/meals',mealsRouter); 
 
 database.connect();
 
